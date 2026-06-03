@@ -940,6 +940,7 @@ def nav(players, maps, active=""):
     parts = [link("dashboard.html", "Overview"), link("maps.html", "Maps overview")]
     parts.append(dropdown("Players", [(_slug(p), p) for p in players]))
     parts.append(dropdown("Map pages", [(_map_slug(m), _pretty_map(m)) for m in maps]))
+    parts.append(link("cs2-basics.html", "CS2 Basics"))
     return "<nav>" + "".join(parts) + "</nav>"
 
 
