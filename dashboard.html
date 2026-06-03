@@ -1,0 +1,106 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S3X stack dashboard</title>
+<script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js'></script><script>window.PAL=['#ff7a2f','#3fb950','#58a6ff','#d2a8ff','#f0b429','#ff6b81','#56d4dd','#a5d6a7'];window.chartReady=function(){if(!window.Chart)return;const C=Chart.defaults;C.color='#9aa3b2';C.borderColor='#262a36';C.font.family="-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif";C.plugins.legend.labels.color='#e6e8ef';C.plugins.tooltip.backgroundColor='#0f1117';C.plugins.tooltip.titleColor='#ff7a2f';C.plugins.tooltip.bodyColor='#e6e8ef';C.plugins.tooltip.borderColor='#2c3142';C.plugins.tooltip.borderWidth=1;C.plugins.tooltip.padding=10;C.scales={category:{grid:{color:'#222633'}},linear:{grid:{color:'#222633'}}};};</script>
+<style>
+:root { --bg:#0f1117; --card:#1a1d27; --ink:#e6e8ef; --muted:#9aa3b2; --accent:#ff7a2f;
+  --good:#3fb950; --bad:#f85149; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:15px/1.5 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+nav { display:flex; flex-wrap:wrap; gap:6px; align-items:center; padding:10px 28px;
+  background:#13151d; border-bottom:1px solid #262a36; position:sticky; top:0; z-index:20; }
+nav a { color:var(--ink); font-size:13px; padding:6px 10px; border-radius:8px;
+  border:1px solid transparent; }
+nav a:hover { background:#20242f; text-decoration:none; }
+nav a.active { background:var(--accent); color:#10121a; font-weight:700; }
+nav .grp { color:var(--muted); font-size:12px; margin:0 4px 0 10px; }
+.dd { position:relative; }
+.dd > .ddbtn { color:var(--ink); font-size:13px; padding:6px 10px; border-radius:8px;
+  border:1px solid transparent; cursor:pointer; background:none; font:inherit;
+  display:inline-flex; align-items:center; gap:5px; }
+.dd > .ddbtn:hover, .dd:hover > .ddbtn { background:#20242f; }
+.dd > .ddbtn.active { background:var(--accent); color:#10121a; font-weight:700; }
+.dd > .ddbtn .caret { font-size:9px; opacity:.7; }
+.dd .menu { position:absolute; left:0; top:100%; min-width:180px;
+  background:#13151d; border:1px solid #262a36; border-radius:10px; padding:6px;
+  margin-top:6px; flex-direction:column; gap:2px; z-index:30;
+  box-shadow:0 12px 30px rgba(0,0,0,.45);
+  opacity:0; visibility:hidden; transform:translateY(-4px);
+  transition:opacity .12s ease, transform .12s ease, visibility 0s linear .25s;
+  display:flex; pointer-events:none; }
+/* invisible bridge so moving the cursor down to the menu doesn't drop the hover */
+.dd .menu::before { content:''; position:absolute; left:0; right:0; top:-8px; height:8px; }
+.dd:hover .menu, .dd:focus-within .menu {
+  opacity:1; visibility:visible; transform:translateY(0);
+  transition:opacity .12s ease, transform .12s ease; pointer-events:auto; }
+.dd .menu a { white-space:nowrap; }
+.dd .menu a.active { background:var(--accent); color:#10121a; font-weight:700; }
+.stacked { display:flex; flex-direction:column; gap:16px; }
+.stacked .chartbox canvas { min-height:340px; }
+header { padding:24px 28px; border-bottom:1px solid #262a36; }
+h1 { margin:0; font-size:22px; } h1 span { color:var(--accent); }
+.sub { color:var(--muted); margin-top:6px; }
+.crumb { color:var(--muted); font-size:13px; margin-bottom:4px; }
+.wrap { padding:22px 28px; max-width:1180px; margin:0 auto; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(330px,1fr)); gap:16px; }
+.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+.stat { background:var(--card); border:1px solid #262a36; border-radius:12px; padding:14px; }
+.stat .v { font-size:24px; font-weight:700; } .stat .k { color:var(--muted); font-size:12px; }
+.card { background:var(--card); border:1px solid #262a36; border-radius:12px; padding:12px;
+  display:flex; align-items:center; justify-content:center; }
+.card img { width:100%; height:auto; border-radius:6px; }
+.card.chartbox { display:block; padding:14px 16px; }
+.chartbox canvas { width:100% !important; }
+h2 { margin:30px 0 12px; font-size:17px; border-left:3px solid var(--accent); padding-left:10px; }
+table { width:100%; border-collapse:collapse; background:var(--card); border-radius:12px;
+  overflow:hidden; font-size:13px; }
+th,td { padding:8px 10px; text-align:right; border-bottom:1px solid #262a36; }
+th { background:#222633; color:var(--muted); font-weight:600; }
+td.pl { text-align:left; font-weight:700; }
+td.pl a { color:var(--accent); }
+td.role,th:nth-child(2) { text-align:left; }
+tbody tr:hover { background:#20242f; }
+.stack { background:#181c28; border:1px solid #2c3142; border-left:4px solid var(--accent);
+  border-radius:10px; padding:16px 18px; margin-bottom:8px; }
+ul.tips { list-style:none; padding:0; }
+ul.tips li { background:var(--card); border:1px solid #262a36; border-radius:10px;
+  padding:12px 14px; margin-bottom:10px; }
+.rl { color:var(--accent); font-weight:600; }
+.cols { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.good { color:var(--good); } .bad { color:var(--bad); }
+ul.sw { margin:0; padding-left:18px; } ul.sw li { margin-bottom:6px; }
+footer { color:var(--muted); font-size:12px; padding:18px 28px; border-top:1px solid #262a36; }
+@media (max-width:760px) { .cols { grid-template-columns:1fr; } }
+</style></head><body>
+<nav><a href='dashboard.html' class='active'>Overview</a><a href='maps.html'>Maps overview</a><div class='dd'><button class='ddbtn'>Players<span class='caret'>▾</span></button><div class='menu'><a href='player_jsn789.html'>jsn789</a><a href='player_kpace.html'>kpace</a><a href='player_a_bozov.html'>A_Bozov</a><a href='player_tarras.html'>Tarras</a><a href='player_dobaka.html'>dobaka_</a><a href='player_xvkt.html'>xvkt</a></div></div><div class='dd'><button class='ddbtn'>Map pages<span class='caret'>▾</span></button><div class='menu'><a href='map_de_mirage.html'>Mirage</a><a href='map_de_dust2.html'>Dust2</a><a href='map_de_inferno.html'>Inferno</a><a href='map_de_nuke.html'>Nuke</a><a href='map_de_ancient.html'>Ancient</a><a href='map_de_cache.html'>Cache</a><a href='map_de_overpass.html'>Overpass</a></div></div></nav>
+<header>
+  <h1><span>S3X</span> stack — role &amp; impact overview</h1>
+  <div class="sub">159 matches · baseline win rate 45.3% · cohort: kpace, A_Bozov, Tarras, dobaka_, xvkt</div>
+</header>
+<div class="wrap">
+  <h2>How the stack operates</h2>
+  <div class="stack">Structure: <b>one primary carry / IGL / AWP</b> (jsn789) + <b>one secondary fragger</b> (kpace) + <b>three support</b> players, with xvkt as a part-time AWP. jsn789 calls the strats — mostly <b>standard rounds</b> (spread across the map, playing off picks) — while also carrying entry, top fragging and the <b>primary AWP</b> load. The team wins on opening picks and utility, and struggles when firepower narrows to jsn789 and kpace alone. <b>Priorities:</b> grow <b>xvkt into a reliable second AWP</b> so jsn789 can focus on entry and calling, and build star rounds around the two main fraggers.</div>
+
+  <h2>Role &amp; performance table (shared games)</h2>
+  <div class="sub" style="margin-bottom:10px">Click a player name for their detailed page.</div>
+  <table><thead><tr><th>player</th><th>role</th><th>N</th><th>ADR</th><th>KD</th><th>KR</th><th>HS%</th><th>entry_pg</th><th>entry_win%</th><th>sniper_pg</th><th>util_dmg_pg</th><th>clutch_pg</th><th>adr_swing</th></tr></thead><tbody><tr><td class='pl'><a href='player_jsn789.html'>jsn789</a></td><td class='role'>Entry / star</td><td>156.0</td><td>112.2</td><td>1.63</td><td>1.06</td><td>44.4</td><td>5.86</td><td>64.3</td><td>3.8</td><td>127.1</td><td>2.35</td><td>10.1</td></tr><tr><td class='pl'><a href='player_kpace.html'>kpace</a></td><td class='role'>Secondary fragger</td><td>129.0</td><td>87.0</td><td>1.26</td><td>0.83</td><td>44.5</td><td>3.29</td><td>56.9</td><td>1.03</td><td>71.7</td><td>1.9</td><td>12.9</td></tr><tr><td class='pl'><a href='player_a_bozov.html'>A_Bozov</a></td><td class='role'>Support / utility</td><td>117.0</td><td>61.4</td><td>0.81</td><td>0.53</td><td>35.3</td><td>2.51</td><td>38.4</td><td>0.06</td><td>132.4</td><td>1.66</td><td>8.7</td></tr><tr><td class='pl'><a href='player_tarras.html'>Tarras</a></td><td class='role'>Support / utility</td><td>125.0</td><td>62.0</td><td>0.65</td><td>0.5</td><td>42.7</td><td>4.5</td><td>36.1</td><td>0.13</td><td>142.0</td><td>1.0</td><td>10.9</td></tr><tr><td class='pl'><a href='player_dobaka.html'>dobaka_</a></td><td class='role'>Rifler (flex)</td><td>19.0</td><td>68.6</td><td>0.74</td><td>0.56</td><td>36.0</td><td>3.63</td><td>50.7</td><td>0.0</td><td>50.8</td><td>1.58</td><td>-1.9</td></tr><tr><td class='pl'><a href='player_xvkt.html'>xvkt</a></td><td class='role'>AWPer</td><td>54.0</td><td>60.3</td><td>0.74</td><td>0.54</td><td>50.5</td><td>4.96</td><td>45.5</td><td>2.85</td><td>46.4</td><td>1.15</td><td>12.7</td></tr></tbody></table>
+
+  <h2>Charts</h2>
+  <div class="stacked">
+    <div class='card chartbox'><canvas id='c_adr' height='300'></canvas></div><div class='card chartbox'><canvas id='c_entry' height='300'></canvas></div><div class='card chartbox'><canvas id='c_support' height='300'></canvas></div>
+    <div class='card chartbox'><canvas id='c_winloss' height='300'></canvas></div><div class='card chartbox'><canvas id='c_map' height='300'></canvas></div><div class='card chartbox'><canvas id='c_session' height='300'></canvas></div>
+  </div>
+
+  <h2>Per-player tips</h2>
+  <ul class="tips"><li><b><a href='player_jsn789.html'>jsn789</a></b> — <span class='rl'>Entry / star</span>: Primary entry, the team&#x27;s top fragger (64% entry win, highest ADR), and the active IGL — calls mostly standard rounds: spread across the map and play off picks. Also the team&#x27;s most-used AWP (3.8 sniper kills/game, more than xvkt), so firepower and the sniper both run through the same player. The opening duel sets the round — trades behind the entry need to be tight. Watch the Mirage results (25% win rate) and the dip on the 3rd map of a session; pace the aggression there.</li><li><b><a href='player_kpace.html'>kpace</a></b> — <span class='rl'>Secondary fragger</span>: The team&#x27;s second source of damage (87 ADR, +13 ADR swing in wins vs losses). Strong fragging profile — worth building star rounds around as a co-entry alongside jsn789.</li><li><b><a href='player_a_bozov.html'>A_Bozov</a></b> — <span class='rl'>Support / utility</span>: An anchor/support role (35% HS, 0.53 K/R) with strong utility output. Most effective on util-heavy holds and set positions rather than duels; a third rifle source would round out the firepower.</li><li><b><a href='player_tarras.html'>Tarras</a></b> — <span class='rl'>Support / utility</span>: A support/lurk profile with the highest utility damage (142/game) and lower entry success (36%). Best value comes from lurk + trade and utility setups rather than taking opening duels.</li><li><b><a href='player_dobaka.html'>dobaka_</a></b> — <span class='rl'>Rifler (flex)</span>: Smallest shared sample (N=19) and the lowest win rate in those games, with ADR roughly flat between wins and losses. Worth more reps together before drawing firm conclusions.</li><li><b><a href='player_xvkt.html'>xvkt</a></b> — <span class='rl'>AWPer</span>: Best positioned to step up as the secondary AWP (2.9 sniper kills/game, 50% HS). Right now jsn789 carries the primary AWP load on top of entry and IGL duties, so growing xvkt into a reliable second sniper frees jsn789 to focus on entry/calling. Smaller sample (N=54), still developing.</li></ul>
+
+  <h2>Map analysis</h2>
+  <div class="stack">See the <a href="maps.html">Maps overview</a> for team win rate by map
+    and per-player breakdowns on each map.</div>
+</div>
+<footer>Generated from cached FACEIT Data API responses · win-rate deltas in a tight premade are noisy — pooled correlation is the reliable read.</footer>
+<script>chartReady();new Chart(document.getElementById('c_adr'),{"type": "bar", "data": {"labels": ["jsn789", "kpace", "A_Bozov", "Tarras", "dobaka_", "xvkt"], "datasets": [{"label": "ADR", "data": [112.2, 87.0, 61.4, 62.0, 68.6, 60.3], "backgroundColor": "#ff7a2f", "borderRadius": 4}, {"type": "line", "label": "baseline 80", "data": [80, 80, 80, 80, 80, 80], "borderColor": "#f85149", "borderDash": [6, 4], "pointRadius": 0, "borderWidth": 1.5}]}, "options": {"responsive": true, "maintainAspectRatio": false, "plugins": {"legend": {"display": true}, "title": {"display": true, "text": "Firepower: avg ADR", "color": "#e6e8ef"}}, "scales": {"y": {"title": {"display": true, "text": "ADR"}}}}});chartReady();new Chart(document.getElementById('c_entry'),Object.assign({"type": "scatter", "data": {"datasets": [{"label": "jsn789", "data": [{"x": 5.86, "y": 64.3}], "backgroundColor": "#ff7a2f", "pointRadius": 7, "pointHoverRadius": 9}, {"label": "kpace", "data": [{"x": 3.29, "y": 56.9}], "backgroundColor": "#3fb950", "pointRadius": 7, "pointHoverRadius": 9}, {"label": "A_Bozov", "data": [{"x": 2.51, "y": 38.4}], "backgroundColor": "#58a6ff", "pointRadius": 7, "pointHoverRadius": 9}, {"label": "Tarras", "data": [{"x": 4.5, "y": 36.1}], "backgroundColor": "#d2a8ff", "pointRadius": 7, "pointHoverRadius": 9}, {"label": "dobaka_", "data": [{"x": 3.63, "y": 50.7}], "backgroundColor": "#f0b429", "pointRadius": 7, "pointHoverRadius": 9}, {"label": "xvkt", "data": [{"x": 4.96, "y": 45.5}], "backgroundColor": "#ff6b81", "pointRadius": 7, "pointHoverRadius": 9}]}, "options": {"responsive": true, "maintainAspectRatio": false, "plugins": {"title": {"display": true, "text": "Entry role", "color": "#e6e8ef"}}, "scales": {"x": {"title": {"display": true, "text": "entries / game"}}, "y": {"title": {"display": true, "text": "entry win %"}}}}},{plugins:[{id:'ptlabels',afterDatasetsDraw:function(c){var x=c.ctx;x.save();x.font='600 11px -apple-system,Segoe UI,Roboto,sans-serif';x.fillStyle='#e6e8ef';c.data.datasets.forEach(function(ds,di){var m=c.getDatasetMeta(di);if(!m.data[0])return;var pt=m.data[0];x.fillText(ds.label,pt.x+9,pt.y+4);});x.restore();}}]}));chartReady();new Chart(document.getElementById('c_support'),Object.assign({"type": "scatter", "data": {"datasets": [{"label": "jsn789", "data": [{"x": 127.1, "y": 3.8}], "backgroundColor": "#ff7a2f", "pointRadius": 7, "pointHoverRadius": 9}, {"label": "kpace", "data": [{"x": 71.7, "y": 1.03}], "backgroundColor": "#3fb950", "pointRadius": 7, "pointHoverRadius": 9}, {"label": "A_Bozov", "data": [{"x": 132.4, "y": 0.06}], "backgroundColor": "#58a6ff", "pointRadius": 7, "pointHoverRadius": 9}, {"label": "Tarras", "data": [{"x": 142.0, "y": 0.13}], "backgroundColor": "#d2a8ff", "pointRadius": 7, "pointHoverRadius": 9}, {"label": "dobaka_", "data": [{"x": 50.8, "y": 0.0}], "backgroundColor": "#f0b429", "pointRadius": 7, "pointHoverRadius": 9}, {"label": "xvkt", "data": [{"x": 46.4, "y": 2.85}], "backgroundColor": "#ff6b81", "pointRadius": 7, "pointHoverRadius": 9}]}, "options": {"responsive": true, "maintainAspectRatio": false, "plugins": {"title": {"display": true, "text": "Support (util) vs AWP", "color": "#e6e8ef"}}, "scales": {"x": {"title": {"display": true, "text": "utility dmg / game"}}, "y": {"title": {"display": true, "text": "sniper kills / game"}}}}},{plugins:[{id:'ptlabels',afterDatasetsDraw:function(c){var x=c.ctx;x.save();x.font='600 11px -apple-system,Segoe UI,Roboto,sans-serif';x.fillStyle='#e6e8ef';c.data.datasets.forEach(function(ds,di){var m=c.getDatasetMeta(di);if(!m.data[0])return;var pt=m.data[0];x.fillText(ds.label,pt.x+9,pt.y+4);});x.restore();}}]}));chartReady();new Chart(document.getElementById('c_winloss'),{"type": "bar", "data": {"labels": ["jsn789", "kpace", "A_Bozov", "Tarras", "dobaka_", "xvkt"], "datasets": [{"label": "ADR in wins", "data": [117.7, 94.1, 66.1, 68.2, 67.2, 67.4], "backgroundColor": "#3fb950", "borderRadius": 4}, {"label": "ADR in losses", "data": [107.6, 81.1, 57.4, 57.4, 69.1, 54.7], "backgroundColor": "#f85149", "borderRadius": 4}]}, "options": {"responsive": true, "maintainAspectRatio": false, "plugins": {"title": {"display": true, "text": "ADR in wins vs losses", "color": "#e6e8ef"}}}});chartReady();new Chart(document.getElementById('c_map'),{"type": "bar", "data": {"labels": ["Cache", "Inferno", "Nuke", "Dust2", "Ancient", "Mirage", "Overpass"], "datasets": [{"label": "win rate %", "data": [66.7, 62.5, 55.6, 50.0, 40.0, 25.6, 0.0], "backgroundColor": "#58a6ff", "borderRadius": 4}, {"type": "line", "label": "baseline 45.3", "data": [45.3, 45.3, 45.3, 45.3, 45.3, 45.3, 45.3], "borderColor": "#f85149", "borderDash": [6, 4], "pointRadius": 0, "borderWidth": 1.5}]}, "options": {"responsive": true, "maintainAspectRatio": false, "plugins": {"legend": {"display": true}, "title": {"display": true, "text": "Win rate by map", "color": "#e6e8ef"}}, "scales": {"y": {"title": {"display": true, "text": "win rate %"}}}}});chartReady();new Chart(document.getElementById('c_session'),{"type": "bar", "data": {"labels": ["4th+", "1st", "2nd", "3rd"], "datasets": [{"label": "win rate %", "data": [50.0, 48.9, 46.3, 32.3], "backgroundColor": "#f0b429", "borderRadius": 4}, {"type": "line", "label": "baseline 45.3", "data": [45.3, 45.3, 45.3, 45.3], "borderColor": "#f85149", "borderDash": [6, 4], "pointRadius": 0, "borderWidth": 1.5}]}, "options": {"responsive": true, "maintainAspectRatio": false, "plugins": {"legend": {"display": true}, "title": {"display": true, "text": "Win rate by match-in-session", "color": "#e6e8ef"}}, "scales": {"y": {"title": {"display": true, "text": "win rate %"}}}}});</script>
+</body></html>

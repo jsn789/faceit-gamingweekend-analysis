@@ -1,0 +1,97 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ancient — team analysis</title>
+<script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js'></script><script>window.PAL=['#ff7a2f','#3fb950','#58a6ff','#d2a8ff','#f0b429','#ff6b81','#56d4dd','#a5d6a7'];window.chartReady=function(){if(!window.Chart)return;const C=Chart.defaults;C.color='#9aa3b2';C.borderColor='#262a36';C.font.family="-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif";C.plugins.legend.labels.color='#e6e8ef';C.plugins.tooltip.backgroundColor='#0f1117';C.plugins.tooltip.titleColor='#ff7a2f';C.plugins.tooltip.bodyColor='#e6e8ef';C.plugins.tooltip.borderColor='#2c3142';C.plugins.tooltip.borderWidth=1;C.plugins.tooltip.padding=10;C.scales={category:{grid:{color:'#222633'}},linear:{grid:{color:'#222633'}}};};</script>
+<style>
+:root { --bg:#0f1117; --card:#1a1d27; --ink:#e6e8ef; --muted:#9aa3b2; --accent:#ff7a2f;
+  --good:#3fb950; --bad:#f85149; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:15px/1.5 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+nav { display:flex; flex-wrap:wrap; gap:6px; align-items:center; padding:10px 28px;
+  background:#13151d; border-bottom:1px solid #262a36; position:sticky; top:0; z-index:20; }
+nav a { color:var(--ink); font-size:13px; padding:6px 10px; border-radius:8px;
+  border:1px solid transparent; }
+nav a:hover { background:#20242f; text-decoration:none; }
+nav a.active { background:var(--accent); color:#10121a; font-weight:700; }
+nav .grp { color:var(--muted); font-size:12px; margin:0 4px 0 10px; }
+.dd { position:relative; }
+.dd > .ddbtn { color:var(--ink); font-size:13px; padding:6px 10px; border-radius:8px;
+  border:1px solid transparent; cursor:pointer; background:none; font:inherit;
+  display:inline-flex; align-items:center; gap:5px; }
+.dd > .ddbtn:hover, .dd:hover > .ddbtn { background:#20242f; }
+.dd > .ddbtn.active { background:var(--accent); color:#10121a; font-weight:700; }
+.dd > .ddbtn .caret { font-size:9px; opacity:.7; }
+.dd .menu { position:absolute; left:0; top:100%; min-width:180px;
+  background:#13151d; border:1px solid #262a36; border-radius:10px; padding:6px;
+  margin-top:6px; flex-direction:column; gap:2px; z-index:30;
+  box-shadow:0 12px 30px rgba(0,0,0,.45);
+  opacity:0; visibility:hidden; transform:translateY(-4px);
+  transition:opacity .12s ease, transform .12s ease, visibility 0s linear .25s;
+  display:flex; pointer-events:none; }
+/* invisible bridge so moving the cursor down to the menu doesn't drop the hover */
+.dd .menu::before { content:''; position:absolute; left:0; right:0; top:-8px; height:8px; }
+.dd:hover .menu, .dd:focus-within .menu {
+  opacity:1; visibility:visible; transform:translateY(0);
+  transition:opacity .12s ease, transform .12s ease; pointer-events:auto; }
+.dd .menu a { white-space:nowrap; }
+.dd .menu a.active { background:var(--accent); color:#10121a; font-weight:700; }
+.stacked { display:flex; flex-direction:column; gap:16px; }
+.stacked .chartbox canvas { min-height:340px; }
+header { padding:24px 28px; border-bottom:1px solid #262a36; }
+h1 { margin:0; font-size:22px; } h1 span { color:var(--accent); }
+.sub { color:var(--muted); margin-top:6px; }
+.crumb { color:var(--muted); font-size:13px; margin-bottom:4px; }
+.wrap { padding:22px 28px; max-width:1180px; margin:0 auto; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(330px,1fr)); gap:16px; }
+.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+.stat { background:var(--card); border:1px solid #262a36; border-radius:12px; padding:14px; }
+.stat .v { font-size:24px; font-weight:700; } .stat .k { color:var(--muted); font-size:12px; }
+.card { background:var(--card); border:1px solid #262a36; border-radius:12px; padding:12px;
+  display:flex; align-items:center; justify-content:center; }
+.card img { width:100%; height:auto; border-radius:6px; }
+.card.chartbox { display:block; padding:14px 16px; }
+.chartbox canvas { width:100% !important; }
+h2 { margin:30px 0 12px; font-size:17px; border-left:3px solid var(--accent); padding-left:10px; }
+table { width:100%; border-collapse:collapse; background:var(--card); border-radius:12px;
+  overflow:hidden; font-size:13px; }
+th,td { padding:8px 10px; text-align:right; border-bottom:1px solid #262a36; }
+th { background:#222633; color:var(--muted); font-weight:600; }
+td.pl { text-align:left; font-weight:700; }
+td.pl a { color:var(--accent); }
+td.role,th:nth-child(2) { text-align:left; }
+tbody tr:hover { background:#20242f; }
+.stack { background:#181c28; border:1px solid #2c3142; border-left:4px solid var(--accent);
+  border-radius:10px; padding:16px 18px; margin-bottom:8px; }
+ul.tips { list-style:none; padding:0; }
+ul.tips li { background:var(--card); border:1px solid #262a36; border-radius:10px;
+  padding:12px 14px; margin-bottom:10px; }
+.rl { color:var(--accent); font-weight:600; }
+.cols { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.good { color:var(--good); } .bad { color:var(--bad); }
+ul.sw { margin:0; padding-left:18px; } ul.sw li { margin-bottom:6px; }
+footer { color:var(--muted); font-size:12px; padding:18px 28px; border-top:1px solid #262a36; }
+@media (max-width:760px) { .cols { grid-template-columns:1fr; } }
+</style></head><body>
+<nav><a href='dashboard.html'>Overview</a><a href='maps.html'>Maps overview</a><div class='dd'><button class='ddbtn'>Players<span class='caret'>▾</span></button><div class='menu'><a href='player_jsn789.html'>jsn789</a><a href='player_kpace.html'>kpace</a><a href='player_a_bozov.html'>A_Bozov</a><a href='player_tarras.html'>Tarras</a><a href='player_dobaka.html'>dobaka_</a><a href='player_xvkt.html'>xvkt</a></div></div><div class='dd'><button class='ddbtn active'>Map pages<span class='caret'>▾</span></button><div class='menu'><a href='map_de_mirage.html'>Mirage</a><a href='map_de_dust2.html'>Dust2</a><a href='map_de_inferno.html'>Inferno</a><a href='map_de_nuke.html'>Nuke</a><a href='map_de_ancient.html' class='active'>Ancient</a><a href='map_de_cache.html'>Cache</a><a href='map_de_overpass.html'>Overpass</a></div></div></nav>
+<header>
+  <div class="crumb"><a href="maps.html">&larr; all maps</a></div>
+  <h1><span>Ancient</span> — team analysis</h1>
+  <div class="sub">6W&ndash;9L · 40.0% win rate
+    (baseline 45.3%)</div>
+</header>
+<div class="wrap">
+  <h2>Summary</h2>
+  <div class="stack">Most-played: <b>15 games</b>. Team win rate <span class='bad'>40.0%</span> (-5.3 vs baseline). Top ADR on this map: <b>jsn789</b>.</div>
+  <h2>Phase &amp; resilience</h2><div class='sub' style='margin-bottom:10px'>Round win% by half (API doesn't label CT/T, so this is start-strong vs finish-strong), plus record in close and overtime games.</div><div class='cards'><div class='stat'><div class='v bad'>45.8%</div><div class='k'>1st-half round win%</div></div><div class='stat'><div class='v good'>54.9%</div><div class='k'>2nd-half round win%</div></div><div class='stat'><div class='v'>1–2</div><div class='k'>close games (≤2 rds) · 33.3%</div></div><div class='stat'><div class='v'>0–0</div><div class='k'>overtime games</div></div></div><h2>Opening duels, clutches &amp; utility (per game on this map)</h2><table><thead><tr><th>player</th><th>N</th><th>entries/g</th><th>entry win%</th><th>1st kills/g</th><th>clutches won/g</th><th>clutch win%</th><th>util dmg/g</th><th>multi-K/g</th><th>HS%</th></tr></thead><tbody><tr><td class='pl'><a href='player_jsn789.html'>jsn789</a></td><td>14</td><td>6.71</td><td class='good'>58.5</td><td>4.0</td><td>0.79</td><td>47.8</td><td>132.9</td><td>5.71</td><td>42.6</td></tr><tr><td class='pl'><a href='player_tarras.html'>Tarras</a></td><td>13</td><td>4.31</td><td class='bad'>26.8</td><td>1.15</td><td>0.15</td><td>20.0</td><td>116.8</td><td>2.0</td><td>43.2</td></tr><tr><td class='pl'><a href='player_xvkt.html'>xvkt</a></td><td>9</td><td>3.67</td><td class='bad'>42.4</td><td>1.56</td><td>0.22</td><td>28.6</td><td>47.9</td><td>2.11</td><td>50.8</td></tr><tr><td class='pl'><a href='player_kpace.html'>kpace</a></td><td>12</td><td>3.25</td><td class='bad'>48.7</td><td>1.67</td><td>0.92</td><td>50.0</td><td>54.9</td><td>4.83</td><td>42.7</td></tr><tr><td class='pl'><a href='player_a_bozov.html'>A_Bozov</a></td><td>12</td><td>2.5</td><td class='bad'>36.7</td><td>0.92</td><td>0.67</td><td>30.8</td><td>109.5</td><td>3.0</td><td>29.6</td></tr></tbody></table><h2>Recommendations</h2><ul class='tips'><li>Slow starts: the team is sharper in the second half (54.9%) than the first (45.8%). Tighten opening-half defaults and pistol/anti-eco execution.</li><li>Loses the close ones: 1–2 in games decided by ≤2 rounds (33.3%). Practice timeout discipline, save rounds and forced-buy decisions.</li><li>Opening duels: Tarras takes 4.31 entries/game on this map but wins only 26.8% — consider handing first contact to jsn789 (58.5%) or trading tighter.</li><li>Below baseline (40.0% vs 45.3%): consider lowering this map in the veto until the issues above are addressed.</li></ul>
+  <h2>Per-player on Ancient (min 3 games)</h2>
+  <table><thead><tr><th>player</th><th>N</th><th>win%</th><th>ADR</th><th>KD</th><th>KR</th><th>HS%</th></tr></thead><tbody><tr><td class='pl'><a href='player_jsn789.html'>jsn789</a></td><td>14</td><td class='bad'>42.9</td><td>112.8</td><td>1.48</td><td>1.03</td><td>42.6</td></tr><tr><td class='pl'><a href='player_kpace.html'>kpace</a></td><td>12</td><td class='good'>50.0</td><td>88.7</td><td>1.25</td><td>0.83</td><td>42.7</td></tr><tr><td class='pl'><a href='player_a_bozov.html'>A_Bozov</a></td><td>12</td><td class='good'>50.0</td><td>66.2</td><td>1.05</td><td>0.65</td><td>29.6</td></tr><tr><td class='pl'><a href='player_tarras.html'>Tarras</a></td><td>13</td><td class='good'>46.2</td><td>61.8</td><td>0.61</td><td>0.49</td><td>43.2</td></tr><tr><td class='pl'><a href='player_xvkt.html'>xvkt</a></td><td>9</td><td class='bad'>44.4</td><td>60.4</td><td>0.71</td><td>0.56</td><td>50.8</td></tr></tbody></table>
+  <h2>Firepower</h2><div class='card chartbox'><canvas id='c_adr_de_ancient' height='280'></canvas></div>
+</div>
+<footer>Scoped to jsn789's team games on this map. Stats are match aggregates (no
+  per-round data available from the API); small samples are directional.
+  <a href="maps.html">Back to maps</a></footer>
+<script>chartReady();new Chart(document.getElementById('c_adr_de_ancient'),{"type": "bar", "data": {"labels": ["jsn789", "kpace", "A_Bozov", "Tarras", "xvkt"], "datasets": [{"label": "avg ADR", "data": [112.8, 88.7, 66.2, 61.8, 60.4], "backgroundColor": "#58a6ff", "borderRadius": 4}]}, "options": {"responsive": true, "maintainAspectRatio": false, "plugins": {"legend": {"display": false}, "title": {"display": true, "text": "Ancient: avg ADR per player", "color": "#e6e8ef"}}, "scales": {"y": {"title": {"display": true, "text": "ADR"}}}}});</script>
+</body></html>

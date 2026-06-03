@@ -1,0 +1,15 @@
+# Secrets
+.env
+
+# Cached raw API responses
+cache/
+
+# Generated artifacts
+report.md
+*.png
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
