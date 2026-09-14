@@ -1,0 +1,103 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nuki_tbg — detail</title>
+<script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js'></script><script>window.PAL=['#ff7a2f','#3fb950','#58a6ff','#d2a8ff','#f0b429','#ff6b81','#56d4dd','#a5d6a7'];window.chartReady=function(){if(!window.Chart)return;const C=Chart.defaults;C.color='#9aa3b2';C.borderColor='#262a36';C.font.family="-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif";C.plugins.legend.labels.color='#e6e8ef';C.plugins.tooltip.backgroundColor='#0f1117';C.plugins.tooltip.titleColor='#ff7a2f';C.plugins.tooltip.bodyColor='#e6e8ef';C.plugins.tooltip.borderColor='#2c3142';C.plugins.tooltip.borderWidth=1;C.plugins.tooltip.padding=10;C.scales={category:{grid:{color:'#222633'}},linear:{grid:{color:'#222633'}}};};</script>
+<style>
+:root { --bg:#0f1117; --card:#1a1d27; --ink:#e6e8ef; --muted:#9aa3b2; --accent:#ff7a2f;
+  --good:#3fb950; --bad:#f85149; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:15px/1.5 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+nav { display:flex; flex-wrap:wrap; gap:6px; align-items:center; padding:10px 28px;
+  background:#13151d; border-bottom:1px solid #262a36; position:sticky; top:0; z-index:20; }
+nav a { color:var(--ink); font-size:13px; padding:6px 10px; border-radius:8px;
+  border:1px solid transparent; }
+nav a:hover { background:#20242f; text-decoration:none; }
+nav a.active { background:var(--accent); color:#10121a; font-weight:700; }
+nav .grp { color:var(--muted); font-size:12px; margin:0 4px 0 10px; }
+.dd { position:relative; }
+.dd > .ddbtn { color:var(--ink); font-size:13px; padding:6px 10px; border-radius:8px;
+  border:1px solid transparent; cursor:pointer; background:none; font:inherit;
+  display:inline-flex; align-items:center; gap:5px; }
+.dd > .ddbtn:hover, .dd:hover > .ddbtn { background:#20242f; }
+.dd > .ddbtn.active { background:var(--accent); color:#10121a; font-weight:700; }
+.dd > .ddbtn .caret { font-size:9px; opacity:.7; }
+.dd .menu { position:absolute; left:0; top:100%; min-width:180px;
+  background:#13151d; border:1px solid #262a36; border-radius:10px; padding:6px;
+  margin-top:6px; flex-direction:column; gap:2px; z-index:30;
+  box-shadow:0 12px 30px rgba(0,0,0,.45);
+  opacity:0; visibility:hidden; transform:translateY(-4px);
+  transition:opacity .12s ease, transform .12s ease, visibility 0s linear .25s;
+  display:flex; pointer-events:none; }
+/* invisible bridge so moving the cursor down to the menu doesn't drop the hover */
+.dd .menu::before { content:''; position:absolute; left:0; right:0; top:-8px; height:8px; }
+.dd:hover .menu, .dd:focus-within .menu {
+  opacity:1; visibility:visible; transform:translateY(0);
+  transition:opacity .12s ease, transform .12s ease; pointer-events:auto; }
+.dd .menu a { white-space:nowrap; }
+.dd .menu a.active { background:var(--accent); color:#10121a; font-weight:700; }
+.stacked { display:flex; flex-direction:column; gap:16px; }
+.stacked .chartbox canvas { min-height:340px; }
+header { padding:24px 28px; border-bottom:1px solid #262a36; }
+h1 { margin:0; font-size:22px; } h1 span { color:var(--accent); }
+.sub { color:var(--muted); margin-top:6px; }
+.crumb { color:var(--muted); font-size:13px; margin-bottom:4px; }
+.wrap { padding:22px 28px; max-width:1180px; margin:0 auto; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(330px,1fr)); gap:16px; }
+.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+.stat { background:var(--card); border:1px solid #262a36; border-radius:12px; padding:14px; }
+.stat .v { font-size:24px; font-weight:700; } .stat .k { color:var(--muted); font-size:12px; }
+.card { background:var(--card); border:1px solid #262a36; border-radius:12px; padding:12px;
+  display:flex; align-items:center; justify-content:center; }
+.card img { width:100%; height:auto; border-radius:6px; }
+.card.chartbox { display:block; padding:14px 16px; }
+.chartbox canvas { width:100% !important; }
+h2 { margin:30px 0 12px; font-size:17px; border-left:3px solid var(--accent); padding-left:10px; }
+table { width:100%; border-collapse:collapse; background:var(--card); border-radius:12px;
+  overflow:hidden; font-size:13px; }
+th,td { padding:8px 10px; text-align:right; border-bottom:1px solid #262a36; }
+th { background:#222633; color:var(--muted); font-weight:600; }
+td.pl { text-align:left; font-weight:700; }
+td.pl a { color:var(--accent); }
+td.role,th:nth-child(2) { text-align:left; }
+tbody tr:hover { background:#20242f; }
+.stack { background:#181c28; border:1px solid #2c3142; border-left:4px solid var(--accent);
+  border-radius:10px; padding:16px 18px; margin-bottom:8px; }
+ul.tips { list-style:none; padding:0; }
+ul.tips li { background:var(--card); border:1px solid #262a36; border-radius:10px;
+  padding:12px 14px; margin-bottom:10px; }
+.rl { color:var(--accent); font-weight:600; }
+.cols { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.good { color:var(--good); } .bad { color:var(--bad); }
+ul.sw { margin:0; padding-left:18px; } ul.sw li { margin-bottom:6px; }
+footer { color:var(--muted); font-size:12px; padding:18px 28px; border-top:1px solid #262a36; }
+@media (max-width:760px) { .cols { grid-template-columns:1fr; } }
+</style></head><body>
+<nav><a href='dashboard.html'>Overview</a><a href='maps.html'>Maps overview</a><div class='dd'><button class='ddbtn active'>Players<span class='caret'>▾</span></button><div class='menu'><a href='player_jsn789.html'>jsn789</a><a href='player_nuki_tbg.html' class='active'>nuki_tbg</a><a href='player_kpace.html'>kpace</a><a href='player_kovkomeister.html'>Kovkomeister</a><a href='player_eradicate.html'>eradicate-</a></div></div><div class='dd'><button class='ddbtn'>Map pages<span class='caret'>▾</span></button><div class='menu'><a href='map_de_mirage.html'>Mirage</a><a href='map_de_dust2.html'>Dust2</a><a href='map_de_inferno.html'>Inferno</a><a href='map_de_cache.html'>Cache</a><a href='map_de_nuke.html'>Nuke</a><a href='map_de_ancient.html'>Ancient</a><a href='map_de_anubis.html'>Anubis</a></div></div></nav>
+<header>
+  <div class="crumb"><a href="dashboard.html">&larr; back to dashboard</a></div>
+  <h1><span>nuki_tbg</span> &middot; Rifler (flex)</h1>
+  <div class="sub">18 shared games · 8W&ndash;10L · 44.4% win rate
+    (stack baseline 44.4%)</div>
+</header>
+<div class="wrap">
+  <h2>Summary</h2>
+  <div class="stack">The stack&#x27;s soft spot this weekend: lowest ADR (61.9) and lowest entry win% (45.8%) of the five, with a flat ADR swing (-0.5) — performance barely tracks with winning, which points to inconsistency rather than one bad night. Worth more reps and lower-risk positioning (utility/trade) until form stabilizes.</div>
+
+  <h2>Key stats (shared games)</h2>
+  <div class="cards"><div class='stat'><div class='v'>18</div><div class='k'>Games</div></div><div class='stat'><div class='v'>61.9</div><div class='k'>ADR</div></div><div class='stat'><div class='v'>0.97</div><div class='k'>K/D</div></div><div class='stat'><div class='v'>0.57</div><div class='k'>K/R</div></div><div class='stat'><div class='v'>41.7%</div><div class='k'>HS%</div></div><div class='stat'><div class='v'>45.8%</div><div class='k'>Entry win%</div></div><div class='stat'><div class='v'>2.67</div><div class='k'>Entries/g</div></div><div class='stat'><div class='v'>1.11</div><div class='k'>Clutch/g</div></div><div class='stat'><div class='v'>54.5</div><div class='k'>Util dmg/g</div></div><div class='stat'><div class='v'>0.0</div><div class='k'>Sniper/g</div></div><div class='stat'><div class='v'>61.6</div><div class='k'>ADR win</div></div><div class='stat'><div class='v'>62.1</div><div class='k'>ADR loss</div></div></div>
+
+  <div class='cols'><div><h2>Strengths</h2><ul class='sw'><li class='sub'>No standout strengths vs cohort.</li></ul></div><div><h2>Weaknesses</h2><ul class='sw'><li class='bad'>raw damage (61.9 vs cohort median 79.6)</li><li class='bad'>K/R impact (0.57 vs cohort median 0.7)</li><li class='bad'>opening duels (45.8 vs cohort median 56.0)</li><li class='bad'>utility damage (54.5 vs cohort median 71.3)</li><li class='bad'>AWP presence (0.0 vs cohort median 1.2)</li><li class='bad'>shows up in wins (-0.5 vs cohort median 7.7)</li></ul></div></div>
+
+  <h2>Form &amp; consistency</h2>
+  <div class='card chartbox'><canvas id='c_form' height='260'></canvas></div>
+
+  <h2>By map</h2>
+  <table><thead><tr><th>map</th><th>N</th><th>win%</th><th>avg ADR</th><th>avg KD</th></tr></thead><tbody><tr><td class='pl'>de_inferno</td><td>3</td><td>66.7</td><td>74.0</td><td>0.87</td></tr><tr><td class='pl'>de_mirage</td><td>5</td><td>60.0</td><td>61.8</td><td>1.33</td></tr><tr><td class='pl'>de_cache</td><td>2</td><td>50.0</td><td>56.6</td><td>0.72</td></tr><tr><td class='pl'>de_nuke</td><td>2</td><td>50.0</td><td>66.4</td><td>0.89</td></tr><tr><td class='pl'>de_dust2</td><td>4</td><td>25.0</td><td>56.9</td><td>0.94</td></tr><tr><td class='pl'>de_ancient</td><td>1</td><td>0.0</td><td>74.5</td><td>0.77</td></tr><tr><td class='pl'>de_anubis</td><td>1</td><td>0.0</td><td>35.0</td><td>0.38</td></tr></tbody></table>
+</div>
+<footer>Stats from cached FACEIT match data, scoped to games played on jsn789's team.
+  Small per-map samples are directional. <a href="dashboard.html">Back to dashboard</a></footer>
+<script>window._pl_c_form=["#1 \u00b7 Nuke \u00b7 L", "#2 \u00b7 Inferno \u00b7 W", "#3 \u00b7 Cache \u00b7 L", "#4 \u00b7 Dust2 \u00b7 L", "#5 \u00b7 Mirage \u00b7 W", "#6 \u00b7 Anubis \u00b7 L", "#7 \u00b7 Dust2 \u00b7 W", "#8 \u00b7 Inferno \u00b7 W", "#9 \u00b7 Mirage \u00b7 W", "#10 \u00b7 Ancient \u00b7 L", "#11 \u00b7 Dust2 \u00b7 L", "#12 \u00b7 Dust2 \u00b7 L", "#13 \u00b7 Mirage \u00b7 L", "#14 \u00b7 Nuke \u00b7 W", "#15 \u00b7 Cache \u00b7 W", "#16 \u00b7 Mirage \u00b7 W", "#17 \u00b7 Inferno \u00b7 L", "#18 \u00b7 Mirage \u00b7 L"];chartReady();new Chart(document.getElementById('c_form'),{"type": "bar", "data": {"labels": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18"], "datasets": [{"label": "ADR (green=win, red=loss)", "data": [63.2, 51.6, 54.4, 66.0, 79.4, 35.0, 45.5, 80.3, 60.1, 74.5, 53.2, 63.0, 54.5, 69.6, 58.8, 47.4, 90.1, 67.4], "backgroundColor": ["#f85149", "#3fb950", "#f85149", "#f85149", "#3fb950", "#f85149", "#3fb950", "#3fb950", "#3fb950", "#f85149", "#f85149", "#f85149", "#f85149", "#3fb950", "#3fb950", "#3fb950", "#f85149", "#f85149"], "borderRadius": 3, "order": 2}, {"type": "line", "label": "5-game avg ADR", "data": [63.2, 57.4, 56.4, 58.8, 62.9, 57.3, 56.1, 61.2, 60.1, 59.1, 62.7, 66.2, 61.1, 63.0, 59.8, 58.7, 64.1, 66.7], "borderColor": "#ff7a2f", "borderWidth": 2, "pointRadius": 0, "tension": 0.3, "order": 1}]}, "options": {"responsive": true, "maintainAspectRatio": false, "plugins": {"title": {"display": true, "text": "nuki_tbg: ADR over shared games", "color": "#e6e8ef"}, "tooltip": {"callbacks": {"title": function(it){return window._pl_c_form[it[0].dataIndex];}}}}, "scales": {"x": {"title": {"display": true, "text": "shared match (oldest \u2192 newest)"}}, "y": {"title": {"display": true, "text": "ADR"}}}}});</script>
+</body></html>

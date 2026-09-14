@@ -26,7 +26,7 @@ except Exception:  # pragma: no cover - fallback if tz data unavailable
 
 BASE_URL = "https://open.faceit.com/data/v4"
 CACHE_DIR = "./cache"
-TARGETS = ["kpace", "Tarras", "A_Bozov", "xvkt", "dobaka_"]
+TARGETS = ["kpace", "nuki_tbg", "Kovkomeister", "eradicate-"]
 SESSION_GAP_S = 2 * 3600  # new session when gap to previous match > 2h
 
 
@@ -427,7 +427,7 @@ def collect_role_stats(session, df, rosters, targets, shared, pid):
     return out.loc[[p for p in order if p in out.index]]
 
 
-def collect_player_detail(session, df, rosters, targets, shared, pid):
+def collect_player_detail(session, df, rosters, targets, shared, pid, min_n=3):
     """Per-player deep data: per-map WR/ADR and per-match series (for trend + splits).
 
     Returns {nickname: {"per_map": DataFrame, "series": DataFrame}} where series has
@@ -470,7 +470,7 @@ def collect_player_detail(session, df, rosters, targets, shared, pid):
         pm = sdf.groupby("map").agg(
             N=("result", "size"), win_rate=("result", "mean"),
             avg_adr=("adr", "mean"), avg_kd=("kd", "mean")).reset_index()
-        pm = pm[pm["N"] >= 3].copy()
+        pm = pm[pm["N"] >= min_n].copy()
         pm["win_rate"] = (pm["win_rate"] * 100).round(1)
         pm["avg_adr"] = pm["avg_adr"].round(1)
         pm["avg_kd"] = pm["avg_kd"].round(2)
@@ -700,43 +700,48 @@ def map_recommendations(m, team, deep, base_wr):
     return recs
 
 
-def auto_role(r):
+IGL = "jsn789"  # in-game leader; not stat-derived, so it's called out alongside the role.
+
+
+def auto_role(r, name=None):
     """Heuristic role label from role-stat row. Entry-star wins over AWP when the
     opening-duel profile is dominant (high entries + high entry win%)."""
     if r["entry_pg"] >= 5.0 and r["entry_win%"] >= 55:
-        return "Entry / star"
-    if r["sniper_pg"] >= 2.0:
-        return "AWPer"
-    if r["ADR"] >= 80:
-        return "Secondary fragger"
-    if r["util_dmg_pg"] >= 100 and r["KR"] < 0.6:
-        return "Support / utility"
-    return "Rifler (flex)"
+        role = "Entry / star"
+    elif r["sniper_pg"] >= 2.0:
+        role = "AWPer"
+    elif r["ADR"] >= 80:
+        role = "Secondary fragger"
+    elif r["util_dmg_pg"] >= 100 and r["KR"] < 0.6:
+        role = "Support / utility"
+    else:
+        role = "Rifler (flex)"
+    return f"{role} / IGL" if name == IGL else role
 
 
 PLAYER_TIPS = {
-    "jsn789": "Primary entry, the team's top fragger (64% entry win, highest ADR), and the "
-              "active IGL — calls mostly standard rounds: spread across the map and play off "
-              "picks. Also the team's most-used AWP (3.8 sniper kills/game, more than xvkt), so "
-              "firepower and the sniper both run through the same player. The opening duel sets "
-              "the round — trades behind the entry need to be tight. Watch the Mirage results "
-              "(25% win rate) and the dip on the 3rd map of a session; pace the aggression there.",
-    "kpace": "The team's second source of damage (87 ADR, +13 ADR swing in wins vs losses). "
-             "Strong fragging profile — worth building star rounds around as a co-entry "
-             "alongside jsn789.",
-    "xvkt": "Best positioned to step up as the secondary AWP (2.9 sniper kills/game, 50% HS). "
-            "Right now jsn789 carries the primary AWP load on top of entry and IGL duties, so "
-            "growing xvkt into a reliable second sniper frees jsn789 to focus on entry/calling. "
-            "Smaller sample (N=54), still developing.",
-    "Tarras": "A support/lurk profile with the highest utility damage (142/game) and lower "
-              "entry success (36%). Best value comes from lurk + trade and utility setups "
-              "rather than taking opening duels.",
-    "A_Bozov": "An anchor/support role (35% HS, 0.53 K/R) with strong utility output. Most "
-               "effective on util-heavy holds and set positions rather than duels; a third "
-               "rifle source would round out the firepower.",
-    "dobaka_": "Smallest shared sample (N=19) and the lowest win rate in those games, with "
-               "ADR roughly flat between wins and losses. Worth more reps together before "
-               "drawing firm conclusions.",
+    "jsn789": "The in-game leader, primary AWP and one of two entry options in this 5-stack: "
+              "89.9 ADR, 4.56 entries/game at a 54.9% win rate, plus 3.78 sniper kills/game. "
+              "Calling and carrying firepower at the same time is a heavy load — ADR swings "
+              "+15.3 higher in wins than losses, so execution tends to follow the calls. Soft "
+              "spots this weekend: Dust2 (25% win rate over 4 games) and the 3rd match of a "
+              "session (25% win rate) — worth easing off there.",
+    "kpace": "Efficient secondary fragger — 75.5 ADR with the best entry win% of the support "
+             "trio (61.5%) despite fewer attempts (2.17/game). Steady clutch factor "
+             "(1.33/game) and a positive ADR swing (+7.7) in wins.",
+    "nuki_tbg": "The stack's soft spot this weekend: lowest ADR (61.9) and lowest entry win% "
+                "(45.8%) of the five, with a flat ADR swing (-0.5) — performance barely tracks "
+                "with winning, which points to inconsistency rather than one bad night. Worth "
+                "more reps and lower-risk positioning (utility/trade) until form stabilizes.",
+    "Kovkomeister": "High-volume rifler — 3.83 entries/game (2nd most) at a solid 59.4% win "
+                    "rate and 79.6 ADR, but a sub-1 K/D (0.93) means the frags don't fully "
+                    "cover the deaths. Lowest clutch rate of the five (0.89/game); best used "
+                    "on structured entries and trades rather than late-round 1vX.",
+    "eradicate-": "The stack's other carry: highest entry volume (6.06/game) and entry win "
+                  "rate (56%), highest utility damage (96.7/game) and HS% (46.7%), and by far "
+                  "the biggest ADR swing between wins and losses (+32.8) — when this player "
+                  "pops off, the team wins. Build rounds around jsn789 + eradicate- as the "
+                  "two-man firepower core.",
 }
 
 
@@ -750,7 +755,7 @@ def build_dashboard(role_df, df, base_wr):
     players = list(role_df.index)
     colors = plt.cm.tab10(np.linspace(0, 1, len(players)))
     fig = plt.figure(figsize=(16, 11))
-    fig.suptitle(f"S3X stack — role & impact overview  (baseline WR {base_wr}%)",
+    fig.suptitle(f"Gaming weekend — role & impact overview  (baseline WR {base_wr}%)",
                  fontsize=16, fontweight="bold")
     gs = fig.add_gridspec(3, 3, height_ratios=[1.1, 1.1, 1.0], hspace=0.45, wspace=0.3)
 
@@ -800,7 +805,7 @@ def build_dashboard(role_df, df, base_wr):
 
     # Panel 6: sample size + role label table.
     ax = fig.add_subplot(gs[1, 2]); ax.axis("off")
-    cells = [[p, int(role_df.loc[p, "N"]), auto_role(role_df.loc[p])] for p in players]
+    cells = [[p, int(role_df.loc[p, "N"]), auto_role(role_df.loc[p], p)] for p in players]
     tbl = ax.table(cellText=cells, colLabels=["player", "games", "role"],
                    loc="center", cellLoc="left")
     tbl.auto_set_font_size(False); tbl.set_fontsize(9); tbl.scale(1, 1.5)
@@ -808,13 +813,14 @@ def build_dashboard(role_df, df, base_wr):
 
     # Panel 7-9: tips text spanning bottom row.
     ax = fig.add_subplot(gs[2, :]); ax.axis("off")
-    ax.set_title("Per-player tips & stack read", loc="left", fontweight="bold", pad=10)
+    ax.set_title("Per-player tips & weekend read", loc="left", fontweight="bold", pad=10)
     y = 0.92
-    stack_line = ("STACK: 1-carry/IGL/AWP (jsn789) + 1 secondary (kpace) + 3 support "
-                  "(xvkt part-time AWP). jsn789 calls standard rounds (spread + play off "
-                  "picks) AND carries entry, fragging and the primary AWP. Win on opening "
-                  "picks & utility; lose when firepower collapses to jsn789 + kpace. "
-                  "Priority: grow xvkt into a 2nd AWP to unload jsn789, feed kpace star rounds.")
+    stack_line = ("5-STACK WEEKEND: jsn789 (IGL + AWP, 89.9 ADR) + eradicate- (highest entry "
+                  "volume 6.06/g, +32.8 ADR swing in wins) are the firepower core; kpace + "
+                  "Kovkomeister are efficient mid-tier riflers; nuki_tbg is the soft spot "
+                  "(lowest ADR/entry win%, flat swing). Real signal isn't role, it's fatigue: "
+                  "WR drops to 16.7% after midnight and 25% by the 3rd match of a session, "
+                  "vs 75% on the 2nd. Priority: cap sessions before the 3rd-match dip.")
     ax.text(0.01, y, stack_line, fontsize=10, wrap=True, va="top",
             bbox=dict(boxstyle="round", fc="#eef", ec="grey"))
     y -= 0.20
@@ -916,6 +922,11 @@ def _pretty_map(mapname):
     return mapname.replace("de_", "").capitalize()
 
 
+def _fmt(v):
+    """Render a possibly-NaN numeric value for HTML display."""
+    return "–" if v != v else v
+
+
 def nav(players, maps, active=""):
     """Shared top navigation bar with Players/Maps dropdown menus.
 
@@ -940,7 +951,6 @@ def nav(players, maps, active=""):
     parts = [link("dashboard.html", "Overview"), link("maps.html", "Maps overview")]
     parts.append(dropdown("Players", [(_slug(p), p) for p in players]))
     parts.append(dropdown("Map pages", [(_map_slug(m), _pretty_map(m)) for m in maps]))
-    parts.append(link("cs2-basics.html", "CS2 Basics"))
     return "<nav>" + "".join(parts) + "</nav>"
 
 
@@ -1104,38 +1114,44 @@ def build_html_dashboard(role_df, df, base_wr, map_g, mis_g, maps=None):
         cells = "".join(f"<td>{r[c]}</td>" for c in role_cols)
         link = f"<a href='{_slug(p)}'>{_html.escape(p)}</a>"
         trs.append(f"<tr><td class='pl'>{link}</td>"
-                   f"<td class='role'>{auto_role(r)}</td>{cells}</tr>")
+                   f"<td class='role'>{auto_role(r, p)}</td>{cells}</tr>")
     table_html = f"<table><thead><tr>{head}</tr></thead><tbody>{''.join(trs)}</tbody></table>"
 
     tips_html = "".join(
         f"<li><b><a href='{_slug(p)}'>{_html.escape(p)}</a></b> — "
-        f"<span class='rl'>{auto_role(role_df.loc[p])}</span>: "
+        f"<span class='rl'>{auto_role(role_df.loc[p], p)}</span>: "
         f"{_html.escape(PLAYER_TIPS.get(p, ''))}</li>" for p in players)
 
-    stack_line = ("Structure: <b>one primary carry / IGL / AWP</b> (jsn789) + <b>one secondary "
-                  "fragger</b> (kpace) + <b>three support</b> players, with xvkt as a part-time "
-                  "AWP. jsn789 calls the strats — mostly <b>standard rounds</b> (spread across the "
-                  "map, playing off picks) — while also carrying entry, top fragging and the "
-                  "<b>primary AWP</b> load. The team wins on opening picks and utility, and "
-                  "struggles when firepower narrows to jsn789 and kpace alone. <b>Priorities:</b> "
-                  "grow <b>xvkt into a reliable second AWP</b> so jsn789 can focus on entry and "
-                  "calling, and build star rounds around the two main fraggers.")
+    stack_line = ("This was a consistent <b>5-stack across all 18 games</b>: jsn789, kpace, "
+                  "nuki_tbg, Kovkomeister and eradicate-. jsn789 is the <b>in-game leader</b> "
+                  "on top of carrying firepower (AWP, 89.9 ADR), and shares that load with "
+                  "<b>eradicate-</b> (highest entry volume at 6.06/g, highest utility damage, "
+                  "and by far the biggest ADR swing between wins and losses at +32.8 — when "
+                  "eradicate- pops off, the team wins). kpace and Kovkomeister are efficient "
+                  "mid-tier riflers with solid entry win rates (61.5% / 59.4%). "
+                  "<b>nuki_tbg</b> is the soft spot: lowest ADR (61.9), "
+                  "lowest entry win% (45.8%) and a flat ADR swing (-0.5) — performance barely "
+                  "tracks with winning. The standout non-role signal is <b>fatigue</b>: win "
+                  "rate craters after midnight (16.7% vs ~58% earlier) and by the 3rd match of "
+                  "a session (25%, vs 75% on the 2nd). <b>Priority:</b> build rounds around "
+                  "jsn789/eradicate- firepower, get nuki_tbg more reps, and cap sessions before "
+                  "the 3rd-match dip.")
 
     def img(key, title):
         return chart_html.get(key, "")
 
     doc = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>S3X stack dashboard</title>
+<title>Gaming Weekend Analysis</title>
 {CHARTJS_HEAD}
 <style>{HTML_CSS}</style></head><body>
 {nav(players, maps, active="dashboard.html")}
 <header>
-  <h1><span>S3X</span> stack — role &amp; impact overview</h1>
+  <h1><span>Gaming Weekend</span> — role &amp; impact overview</h1>
   <div class="sub">{len(df)} matches · baseline win rate {base_wr}% · cohort: {', '.join(players[1:])}</div>
 </header>
 <div class="wrap">
-  <h2>How the stack operates</h2>
+  <h2>How this weekend played out</h2>
   <div class="stack">{stack_line}</div>
 
   <h2>Role &amp; performance table (shared games)</h2>
@@ -1200,7 +1216,7 @@ def build_player_pages(role_df, detail, base_wr, maps=None):
         r = role_df.loc[name]
         sdf = detail[name]["series"]
         pm = detail[name]["per_map"]
-        role = auto_role(r)
+        role = auto_role(r, name)
 
         # Stat cards.
         cards = [("Games", int(r["N"])), ("ADR", r["ADR"]), ("K/D", r["KD"]),
@@ -1262,7 +1278,7 @@ def build_player_pages(role_df, detail, base_wr, maps=None):
             map_table = (f"<table><thead><tr><th>map</th><th>N</th><th>win%</th>"
                          f"<th>avg ADR</th><th>avg KD</th></tr></thead><tbody>{rows}</tbody></table>")
         else:
-            map_table = "<p class='sub'>Not enough games per map (min 3).</p>"
+            map_table = "<p class='sub'>No shared games recorded on any map.</p>"
 
         strengths, weaknesses = _strengths_weaknesses(name, role_df)
         sw = (f"<div class='cols'><div><h2>Strengths</h2><ul class='sw'>"
@@ -1285,7 +1301,7 @@ def build_player_pages(role_df, detail, base_wr, maps=None):
 <style>{HTML_CSS}</style></head><body>
 {nav(players, maps, active=_slug(name))}
 <header>
-  <div class="crumb"><a href="dashboard.html">&larr; back to stack dashboard</a></div>
+  <div class="crumb"><a href="dashboard.html">&larr; back to dashboard</a></div>
   <h1><span>{_html.escape(name)}</span> &middot; {role}</h1>
   <div class="sub">{n} shared games · {wins}W&ndash;{n-wins}L · {wr}% win rate
     (stack baseline {base_wr}%)</div>
@@ -1302,7 +1318,7 @@ def build_player_pages(role_df, detail, base_wr, maps=None):
   <h2>Form &amp; consistency</h2>
   {trend_html}
 
-  <h2>By map (min 3 games)</h2>
+  <h2>By map</h2>
   {map_table}
 </div>
 <footer>Stats from cached FACEIT match data, scoped to games played on jsn789's team.
@@ -1369,7 +1385,7 @@ def build_map_pages(map_stats, players, base_wr, deep_stats=None):
   <h2>Map summary</h2>
   {ov_table}
 </div>
-<footer>Generated from cached FACEIT match data. Maps with fewer than 3 games are omitted.</footer>
+<footer>Generated from cached FACEIT match data. Every map played this window is included; small samples are directional.</footer>
 <script>{ov_js}</script>
 </body></html>"""
     with open("maps.html", "w") as fh:
@@ -1458,10 +1474,10 @@ def build_map_pages(map_stats, players, base_wr, deep_stats=None):
                               f"{_html.escape(row['player'])}</a></td>"
                               f"<td>{row['N']}</td>"
                               f"<td>{row['entry_pg']}</td>"
-                              f"<td class='{ecls}'>{row['entry_win%']}</td>"
+                              f"<td class='{ecls}'>{_fmt(row['entry_win%'])}</td>"
                               f"<td>{row['first_kills_pg']}</td>"
                               f"<td>{row['clutch_won_pg']}</td>"
-                              f"<td>{row['clutch_win%']}</td>"
+                              f"<td>{_fmt(row['clutch_win%'])}</td>"
                               f"<td>{row['util_dmg_pg']}</td>"
                               f"<td>{row['multikill_pg']}</td>"
                               f"<td>{row['HS%']}</td></tr>")
@@ -1495,7 +1511,7 @@ def build_map_pages(map_stats, players, base_wr, deep_stats=None):
   <h2>Summary</h2>
   <div class="stack">{note}</div>
   {deep_html}
-  <h2>Per-player on {_pretty_map(m)} (min 3 games)</h2>
+  <h2>Per-player on {_pretty_map(m)}</h2>
   {ptable}
   {('<h2>Firepower</h2>' + mchart) if mchart else ''}
 </div>
@@ -1535,7 +1551,7 @@ def main():
     df["hour_bucket"] = df["hour_local"].apply(hour_bucket)
 
     base_wr = round(df["result"].mean() * 100, 1)
-    map_g = grouped_winrate(df, "map")
+    map_g = grouped_winrate(df, "map", min_n=1)
     hour_g = grouped_winrate(df, "hour_bucket")
     mis_g = grouped_winrate(df, "mis_bucket")
     base_g = grouped_winrate(df.assign(zone=df["below_baseline"].map(
@@ -1663,9 +1679,9 @@ def main():
             if args.dashboard:
                 build_dashboard(role_df, df, base_wr)
             if args.html:
-                detail = collect_player_detail(session, df, rosters, targets, shared, pid)
-                map_stats = collect_map_team_stats(df, detail)
-                deep_stats = collect_map_deep_stats(session, df, rosters, targets, shared, pid)
+                detail = collect_player_detail(session, df, rosters, targets, shared, pid, min_n=1)
+                map_stats = collect_map_team_stats(df, detail, min_n=1)
+                deep_stats = collect_map_deep_stats(session, df, rosters, targets, shared, pid, min_n=1)
                 maps = list(map_stats.keys())
                 build_html_dashboard(role_df, df, base_wr, map_g, mis_g, maps)
                 build_player_pages(role_df, detail, base_wr, maps)
