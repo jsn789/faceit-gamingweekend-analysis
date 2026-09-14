@@ -73,6 +73,9 @@ ul.tips li { background:var(--card); border:1px solid #262a36; border-radius:10p
 .good { color:var(--good); } .bad { color:var(--bad); }
 ul.sw { margin:0; padding-left:18px; } ul.sw li { margin-bottom:6px; }
 footer { color:var(--muted); font-size:12px; padding:18px 28px; border-top:1px solid #262a36; }
+.clipwrap { position:relative; width:100%; padding-top:56.25%; background:var(--card);
+  border:1px solid #262a36; border-radius:12px; overflow:hidden; }
+.clipwrap iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
 @media (max-width:760px) { .cols { grid-template-columns:1fr; } }
 </style></head><body>
 <nav><a href='dashboard.html'>Overview</a><a href='maps.html'>Maps overview</a><div class='dd'><button class='ddbtn active'>Players<span class='caret'>▾</span></button><div class='menu'><a href='player_jsn789.html'>jsn789</a><a href='player_nuki_tbg.html' class='active'>nuki_tbg</a><a href='player_kpace.html'>kpace</a><a href='player_kovkomeister.html'>Kovkomeister</a><a href='player_eradicate.html'>eradicate-</a></div></div><div class='dd'><button class='ddbtn'>Map pages<span class='caret'>▾</span></button><div class='menu'><a href='map_de_mirage.html'>Mirage</a><a href='map_de_dust2.html'>Dust2</a><a href='map_de_inferno.html'>Inferno</a><a href='map_de_cache.html'>Cache</a><a href='map_de_nuke.html'>Nuke</a><a href='map_de_ancient.html'>Ancient</a><a href='map_de_anubis.html'>Anubis</a></div></div></nav>
@@ -96,6 +99,8 @@ footer { color:var(--muted); font-size:12px; padding:18px 28px; border-top:1px s
 
   <h2>By map</h2>
   <table><thead><tr><th>map</th><th>N</th><th>win%</th><th>avg ADR</th><th>avg KD</th></tr></thead><tbody><tr><td class='pl'>de_inferno</td><td>3</td><td>66.7</td><td>74.0</td><td>0.87</td></tr><tr><td class='pl'>de_mirage</td><td>5</td><td>60.0</td><td>61.8</td><td>1.33</td></tr><tr><td class='pl'>de_cache</td><td>2</td><td>50.0</td><td>56.6</td><td>0.72</td></tr><tr><td class='pl'>de_nuke</td><td>2</td><td>50.0</td><td>66.4</td><td>0.89</td></tr><tr><td class='pl'>de_dust2</td><td>4</td><td>25.0</td><td>56.9</td><td>0.94</td></tr><tr><td class='pl'>de_ancient</td><td>1</td><td>0.0</td><td>74.5</td><td>0.77</td></tr><tr><td class='pl'>de_anubis</td><td>1</td><td>0.0</td><td>35.0</td><td>0.38</td></tr></tbody></table>
+
+  <h2>Highlight clip</h2><div class='clipwrap'><iframe src='https://allstar.gg/clip/6aa7cb255bc68a7a57c0acf8?ref=695ed7e0db3c83c310df630a' loading='lazy' allow='fullscreen' allowfullscreen referrerpolicy='strict-origin-when-cross-origin'></iframe></div>
 </div>
 <footer>Stats from cached FACEIT match data, scoped to games played on jsn789's team.
   Small per-map samples are directional. <a href="dashboard.html">Back to dashboard</a></footer>

@@ -745,6 +745,15 @@ PLAYER_TIPS = {
 }
 
 
+PLAYER_CLIPS = {
+    "kpace": "https://allstar.gg/clip/6aa5d13c0ff9d4e066939f5d?ref=695ed7e0db3c83c310df630a",
+    "jsn789": "https://allstar.gg/clip/6aa463c19dc43cf2c99b6e6e?ref=695ed7e0db3c83c310df630a",
+    "eradicate-": "https://allstar.gg/clip/6aa5c5482124e563fc54a14a?ref=695ed7e0db3c83c310df630a",
+    "Kovkomeister": "https://allstar.gg/clip/6aa7c9013896a9880f025c31?ref=695ed7e0db3c83c310df630a",
+    "nuki_tbg": "https://allstar.gg/clip/6aa7cb255bc68a7a57c0acf8?ref=695ed7e0db3c83c310df630a",
+}
+
+
 def build_dashboard(role_df, df, base_wr):
     """Multi-panel PNG: role profiles, win/loss ADR, stack overview, tips."""
     import matplotlib
@@ -904,6 +913,9 @@ ul.tips li { background:var(--card); border:1px solid #262a36; border-radius:10p
 .good { color:var(--good); } .bad { color:var(--bad); }
 ul.sw { margin:0; padding-left:18px; } ul.sw li { margin-bottom:6px; }
 footer { color:var(--muted); font-size:12px; padding:18px 28px; border-top:1px solid #262a36; }
+.clipwrap { position:relative; width:100%; padding-top:56.25%; background:var(--card);
+  border:1px solid #262a36; border-radius:12px; overflow:hidden; }
+.clipwrap iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
 @media (max-width:760px) { .cols { grid-template-columns:1fr; } }
 """
 
@@ -1294,6 +1306,15 @@ def build_player_pages(role_df, detail, base_wr, maps=None):
         wr = round(100 * wins / n, 1) if n else 0
         tip = _html.escape(PLAYER_TIPS.get(name, ""))
 
+        clip_url = PLAYER_CLIPS.get(name)
+        clip_section = ""
+        if clip_url:
+            clip_section = (
+                "<h2>Highlight clip</h2>"
+                "<div class='clipwrap'><iframe src='" + _html.escape(clip_url) + "' "
+                "loading='lazy' allow='fullscreen' allowfullscreen "
+                "referrerpolicy='strict-origin-when-cross-origin'></iframe></div>")
+
         doc = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{_html.escape(name)} — detail</title>
@@ -1320,6 +1341,8 @@ def build_player_pages(role_df, detail, base_wr, maps=None):
 
   <h2>By map</h2>
   {map_table}
+
+  {clip_section}
 </div>
 <footer>Stats from cached FACEIT match data, scoped to games played on jsn789's team.
   Small per-map samples are directional. <a href="dashboard.html">Back to dashboard</a></footer>
