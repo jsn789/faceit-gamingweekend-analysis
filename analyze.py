@@ -26,7 +26,7 @@ except Exception:  # pragma: no cover - fallback if tz data unavailable
 
 BASE_URL = "https://open.faceit.com/data/v4"
 CACHE_DIR = "./cache"
-TARGETS = ["kpace", "nuki_tbg", "Kovkomeister", "eradicate-"]
+TARGETS = ["kpace", "nuki_tbg", "Kovkomeister", "eradicate-", "dobaka_"]
 SESSION_GAP_S = 2 * 3600  # new session when gap to previous match > 2h
 
 
@@ -719,30 +719,66 @@ def auto_role(r, name=None):
     return f"{role} / IGL" if name == IGL else role
 
 
-PLAYER_TIPS = {
-    "jsn789": "The in-game leader, primary AWP and one of two entry options in this 5-stack: "
-              "89.9 ADR, 4.56 entries/game at a 54.9% win rate, plus 3.78 sniper kills/game. "
-              "Calling and carrying firepower at the same time is a heavy load — ADR swings "
-              "+15.3 higher in wins than losses, so execution tends to follow the calls. Soft "
-              "spots this weekend: Dust2 (25% win rate over 4 games) and the 3rd match of a "
-              "session (25% win rate) — worth easing off there.",
-    "kpace": "Efficient secondary fragger — 75.5 ADR with the best entry win% of the support "
-             "trio (61.5%) despite fewer attempts (2.17/game). Steady clutch factor "
-             "(1.33/game) and a positive ADR swing (+7.7) in wins.",
-    "nuki_tbg": "The stack's soft spot this weekend: lowest ADR (61.9) and lowest entry win% "
-                "(45.8%) of the five, with a flat ADR swing (-0.5) — performance barely tracks "
-                "with winning, which points to inconsistency rather than one bad night. Worth "
-                "more reps and lower-risk positioning (utility/trade) until form stabilizes.",
-    "Kovkomeister": "High-volume rifler — 3.83 entries/game (2nd most) at a solid 59.4% win "
-                    "rate and 79.6 ADR, but a sub-1 K/D (0.93) means the frags don't fully "
-                    "cover the deaths. Lowest clutch rate of the five (0.89/game); best used "
-                    "on structured entries and trades rather than late-round 1vX.",
-    "eradicate-": "The stack's other carry: highest entry volume (6.06/game) and entry win "
-                  "rate (56%), highest utility damage (96.7/game) and HS% (46.7%), and by far "
-                  "the biggest ADR swing between wins and losses (+32.8) — when this player "
-                  "pops off, the team wins. Build rounds around jsn789 + eradicate- as the "
-                  "two-man firepower core.",
-}
+NARRATIVE = {"tips": {}, "stack_html": "", "stack_text": ""}
+
+
+def build_narrative(role_df, df, cohort_df, map_g, base_wr):
+    """Generate per-player tips and the stack summary from computed stats."""
+    n, wins = len(df), int(df["result"].sum())
+    wr_with = {r["teammate"]: r for _, r in cohort_df.iterrows()} if not cohort_df.empty else {}
+    metrics = [("ADR", "ADR"), ("entry_pg", "entry volume"), ("util_dmg_pg", "utility damage"),
+               ("KD", "K/D"), ("clutch_pg", "clutches"), ("HS%", "headshot rate")]
+    best = {c: role_df[c].idxmax() for c, _ in metrics}
+    worst = {c: role_df[c].idxmin() for c, _ in metrics}
+
+    tips = {}
+    for p in role_df.index:
+        r = role_df.loc[p]
+        s = [f"{r['ADR']} ADR, {r['entry_pg']} entries/game at "
+             f"{r['entry_win%']}% win"
+             + (f", {r['sniper_pg']} sniper kills/game" if r["sniper_pg"] >= 2 else "") + "."]
+        if p == IGL:
+            s.append("Also the in-game leader, so calling sits on top of the fragging load.")
+        tops = [lab for c, lab in metrics if best[c] == p][:3]
+        lows = [lab for c, lab in metrics if worst[c] == p][:2]
+        if tops:
+            s.append("Highest in the group for " + ", ".join(tops) + ".")
+        if lows:
+            s.append("Lowest in the group for " + ", ".join(lows) + ".")
+        sw = r["adr_swing"]
+        if sw >= 15:
+            s.append(f"ADR is {sw} higher in wins than losses, so results follow their form.")
+        elif sw <= 0:
+            s.append(f"ADR is {'flat' if sw > -5 else 'lower'} in wins ({sw:+}), so output "
+                     "doesn't track results.")
+        w = wr_with.get(p)
+        if w is not None and w["wr_baseline_without"] == w["wr_baseline_without"]:
+            s.append(f"Team wins {w['wr_with']}% with them in the lineup ({int(w['N'])} games) "
+                     f"vs {w['wr_baseline_without']}% without.")
+        if r["N"] < 20:
+            s.append(f"Small sample (N={int(r['N'])}), so treat this as directional.")
+        tips[p] = " ".join(s)
+
+    facts = [f"{n} games, {wins}W\u2013{n - wins}L ({base_wr}% win rate). "
+             f"{IGL} is the in-game leader and played all of them."]
+    freq = ", ".join(f"{p} {int(role_df.loc[p, 'N'])}" for p in
+                     role_df["N"].sort_values(ascending=False).index if p != IGL)
+    facts.append(f"The lineup rotated: games alongside {freq}.")
+    big = map_g[map_g["N"] >= 5].sort_values("win_rate")
+    if len(big) >= 2:
+        lo, hi = big.index[0], big.index[-1]
+        facts.append(f"Strongest map: {_pretty_map(hi)} ({big.loc[hi, 'win_rate']}% over "
+                     f"{int(big.loc[hi, 'N'])}); weakest: {_pretty_map(lo)} "
+                     f"({big.loc[lo, 'win_rate']}% over {int(big.loc[lo, 'N'])}).")
+    early, late = df[df["match_in_session"] <= 2], df[df["match_in_session"] >= 3]
+    if len(late) >= 5 and len(early) >= 5:
+        e, l = round(100 * early["result"].mean(), 1), round(100 * late["result"].mean(), 1)
+        if abs(e - l) >= 10:
+            facts.append(f"Session length matters: {e}% in the first two matches of a session "
+                         f"({len(early)} games) vs {l}% from the third on ({len(late)} games).")
+    NARRATIVE["tips"] = tips
+    NARRATIVE["stack_text"] = " ".join(facts)
+    NARRATIVE["stack_html"] = " ".join(facts)
 
 
 PLAYER_CLIPS = {
@@ -824,17 +860,12 @@ def build_dashboard(role_df, df, base_wr):
     ax = fig.add_subplot(gs[2, :]); ax.axis("off")
     ax.set_title("Per-player tips & weekend read", loc="left", fontweight="bold", pad=10)
     y = 0.92
-    stack_line = ("5-STACK WEEKEND: jsn789 (IGL + AWP, 89.9 ADR) + eradicate- (highest entry "
-                  "volume 6.06/g, +32.8 ADR swing in wins) are the firepower core; kpace + "
-                  "Kovkomeister are efficient mid-tier riflers; nuki_tbg is the soft spot "
-                  "(lowest ADR/entry win%, flat swing). Real signal isn't role, it's fatigue: "
-                  "WR drops to 16.7% after midnight and 25% by the 3rd match of a session, "
-                  "vs 75% on the 2nd. Priority: cap sessions before the 3rd-match dip.")
+    stack_line = NARRATIVE["stack_text"]
     ax.text(0.01, y, stack_line, fontsize=10, wrap=True, va="top",
             bbox=dict(boxstyle="round", fc="#eef", ec="grey"))
     y -= 0.20
     for p in players:
-        tip = PLAYER_TIPS.get(p, "")
+        tip = NARRATIVE["tips"].get(p, "")
         ax.text(0.01, y, f"• {p}: {tip}", fontsize=9, va="top", wrap=True)
         y -= 0.135
     fig.savefig("stack_dashboard.png", dpi=110, bbox_inches="tight")
@@ -1123,7 +1154,7 @@ def build_html_dashboard(role_df, df, base_wr, map_g, mis_g, maps=None):
     trs = []
     for p in players:
         r = role_df.loc[p]
-        cells = "".join(f"<td>{r[c]}</td>" for c in role_cols)
+        cells = "".join(f"<td>{int(r[c]) if c == 'N' else r[c]}</td>" for c in role_cols)
         link = f"<a href='{_slug(p)}'>{_html.escape(p)}</a>"
         trs.append(f"<tr><td class='pl'>{link}</td>"
                    f"<td class='role'>{auto_role(r, p)}</td>{cells}</tr>")
@@ -1132,25 +1163,15 @@ def build_html_dashboard(role_df, df, base_wr, map_g, mis_g, maps=None):
     tips_html = "".join(
         f"<li><b><a href='{_slug(p)}'>{_html.escape(p)}</a></b> — "
         f"<span class='rl'>{auto_role(role_df.loc[p], p)}</span>: "
-        f"{_html.escape(PLAYER_TIPS.get(p, ''))}</li>" for p in players)
+        f"{_html.escape(NARRATIVE['tips'].get(p, ''))}</li>" for p in players)
 
-    stack_line = ("This was a consistent <b>5-stack across all 18 games</b>: jsn789, kpace, "
-                  "nuki_tbg, Kovkomeister and eradicate-. jsn789 is the <b>in-game leader</b> "
-                  "on top of carrying firepower (AWP, 89.9 ADR), and shares that load with "
-                  "<b>eradicate-</b> (highest entry volume at 6.06/g, highest utility damage, "
-                  "and by far the biggest ADR swing between wins and losses at +32.8 — when "
-                  "eradicate- pops off, the team wins). kpace and Kovkomeister are efficient "
-                  "mid-tier riflers with solid entry win rates (61.5% / 59.4%). "
-                  "<b>nuki_tbg</b> is the soft spot: lowest ADR (61.9), "
-                  "lowest entry win% (45.8%) and a flat ADR swing (-0.5) — performance barely "
-                  "tracks with winning. The standout non-role signal is <b>fatigue</b>: win "
-                  "rate craters after midnight (16.7% vs ~58% earlier) and by the 3rd match of "
-                  "a session (25%, vs 75% on the 2nd). <b>Priority:</b> build rounds around "
-                  "jsn789/eradicate- firepower, get nuki_tbg more reps, and cap sessions before "
-                  "the 3rd-match dip.")
+    stack_line = _html.escape(NARRATIVE["stack_html"])
 
     def img(key, title):
         return chart_html.get(key, "")
+
+    d0, d1 = df["finished_dt"].min(), df["finished_dt"].max()
+    span = f"{d0:%d %b} \u2013 {d1:%d %b %Y}"
 
     doc = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -1160,7 +1181,7 @@ def build_html_dashboard(role_df, df, base_wr, map_g, mis_g, maps=None):
 {nav(players, maps, active="dashboard.html")}
 <header>
   <h1><span>Gaming Weekend</span> — role &amp; impact overview</h1>
-  <div class="sub">{len(df)} matches · baseline win rate {base_wr}% · cohort: {', '.join(players[1:])}</div>
+  <div class="sub">{len(df)} matches ({span}) · baseline win rate {base_wr}% · cohort: {', '.join(players[1:])}</div>
 </header>
 <div class="wrap">
   <h2>How this weekend played out</h2>
@@ -1304,7 +1325,7 @@ def build_player_pages(role_df, detail, base_wr, maps=None):
         wins = int(sdf["result"].sum())
         n = len(sdf)
         wr = round(100 * wins / n, 1) if n else 0
-        tip = _html.escape(PLAYER_TIPS.get(name, ""))
+        tip = _html.escape(NARRATIVE["tips"].get(name, ""))
 
         clip_url = PLAYER_CLIPS.get(name)
         clip_section = ""
@@ -1699,6 +1720,7 @@ def main():
     if (args.dashboard or args.html) and targets:
         role_df = collect_role_stats(session, df, rosters, targets, shared, pid)
         if not role_df.empty:
+            build_narrative(role_df, df, cohort_df, map_g, base_wr)
             if args.dashboard:
                 build_dashboard(role_df, df, base_wr)
             if args.html:
