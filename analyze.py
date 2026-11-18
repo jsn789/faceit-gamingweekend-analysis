@@ -26,7 +26,7 @@ except Exception:  # pragma: no cover - fallback if tz data unavailable
 
 BASE_URL = "https://open.faceit.com/data/v4"
 CACHE_DIR = "./cache"
-TARGETS = ["kpace", "nuki_tbg", "Kovkomeister", "eradicate-", "dobaka_"]
+TARGETS = ["kpace", "nuki_tbg", "Kovkomeister", "eradicate-", "dobaka_", "A_Bozov"]
 SESSION_GAP_S = 2 * 3600  # new session when gap to previous match > 2h
 
 
